@@ -1,0 +1,92 @@
+name 			 Auspicia Dran
+isNpc 			 True
+source 			 AI
+page 			 208
+size 			 M
+type_type 			 humanoid
+type_tags 			 ['half-elf']
+alignment 			 ['N', 'G']
+ac 			 [{'ac': 15, 'from': ['{@item chain shirt|phb}']}]
+hp_average 			 52
+hp_formula 			 8d8 + 16
+speed_walk 			 30
+str 			 16
+dex 			 14
+con 			 14
+int 			 15
+wis 			 12
+cha 			 10
+skill_athletics 			 +5
+skill_perception 			 +3
+passive 			 13
+languages 			 ['Common', 'Elvish']
+cr 			 2
+spellcasting 			 [{'name': 'Innate Spellcasting (Psionics)', 'headerEntries': ["Auspicia's innate spellcasting ability is Intelligence. She can innately cast the following spells, requiring no components:"], 'will': ['{@spell detect thoughts}'], 'daily': {'1e': ['{@spell augury}']}, 'ability': 'int'}]
+action 			 [{'name': 'Multiattack', 'entries': ['Auspicia makes two attacks.']}, {'name': 'Longsword', 'entries': ['{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d8 + 3}) slashing damage, or 8 ({@damage 1d10 + 3}) slashing damage if used with two hands.']}, {'name': 'Light Crossbow', 'entries': ['{@atk rw} {@hit 4} to hit, range 80/320 ft., one target. {@h}6 ({@damage 1d8 + 2}) piercing damage.']}]
+hasToken 			 True
+actionTags 			 ['Multiattack']
+languageTags 			 ['C', 'E']
+damageTags 			 ['P', 'S']
+spellcastingTags 			 ['I', 'P']
+miscTags 			 ['MW', 'RNG', 'RW']
+skill_performance 			 +5
+skill_persuasion 			 +5
+trait 			 [{'name': 'Fey Ancestry', 'entries': ["Brahma has advantage on saving throws against being {@condition charmed}, and magic can't put her to sleep."]}, {'name': 'Taunt (2/Day)', 'entries': ["Brahma can use a bonus action to target one creature she can see within 30 feet of her. If the target can hear Brahma, it must succeed on a {@dc 13} Charisma saving throw or have disadvantage on ability checks, attack rolls, and saving throws until the start of Brahma's next turn."]}]
+traitTags 			 ['Fey Ancestry']
+conditionInflict 			 ['charmed']
+conditionInflictSpell 			 ['charmed', 'invisible', 'unconscious']
+type 			 aberration
+speed_climb 			 40
+skill_acrobatics 			 +5
+senses 			 ['blindsight 120 ft. (blind beyond this radius)']
+senseTags 			 ['B']
+speed_fly 			 60
+immune 			 ['poison', 'psychic']
+conditionImmune 			 ['blinded', 'charmed', 'deafened', 'exhaustion', 'frightened', 'paralyzed', 'petrified', 'poisoned']
+save_con 			 +8
+save_wis 			 +6
+skill_stealth 			 +11
+save_cha 			 +5
+skill_history 			 +2
+skill_insight 			 +2
+skill_intimidation 			 +5
+resist 			 ['acid']
+save_int 			 +5
+skill_arcana 			 +5
+skill_animal handling 			 +4
+save_str 			 +0
+save_dex 			 +3
+skill_investigation 			 +4
+skill_religion 			 +4
+skill_nature 			 +3
+skill_survival 			 +4
+reaction 			 [{'name': 'Return the Favor (3/Day)', 'entries': ['When Oak takes damage from a melee weapon attack, he can make a hooked dagger attack.']}]
+skill_deception 			 +4
+skill_medicine 			 +7
+skill_sleight of hand 			 +11
+familiar 			 True
+speed_swim 			 60
+speed_canHover 			 True
+vulnerable 			 ['radiant']
+group 			 Lycanthropes
+otherSources 			 [{'source': 'DC'}, {'source': 'SDW'}]
+speed_burrow 			 40
+variant 			 [{'type': 'variant', 'name': 'Husk Zombie Bursters', 'entries': ['Some husk zombies become bloated with disease and bile, their frenzied state pushing them to rush other living creatures, explode, and spread their horrid infection. A husk zombie burster has the following additional action option:', {'type': 'entries', 'name': 'Burst', 'entries': ['The zombie explodes and is destroyed. Each creature within 5 feet of it must make a DC 12 Constitution saving throw, taking 14 ({@damage 4d6}) poison damage on a failed save, or half as much damage on a successful one. A humanoid creature killed by this damage rises as a husk zombie after 1 minute.']}]}]
+altArt 			 [{'name': 'Clawfoot Raptor', 'source': 'WGE'}]
+type_swarmSize 			 T
+soundClip_type 			 internal
+soundClip_path 			 bestiary/guard-drake.mp3
+isNamedCreature 			 True
+_isCopy 			 True
+environment 			 ['mountain']
+srd 			 True
+cr_cr 			 3
+cr_coven 			 5
+alias 			 ['Illithid']
+dragonCastingColor 			 B
+skill_other 			 [{'oneOf': {'arcana': '+7', 'history': '+7', 'nature': '+7', 'religion': '+7'}}]
+legendaryGroup_name 			 Merrenoloth
+legendaryGroup_source 			 MTF
+conditionInflictLegendary 			 ['prone']
+hp_special 			 127 (17d8+51) reduced to 107; subtract 1 for each day that passes during the adventure
+cr_lair 			 12
