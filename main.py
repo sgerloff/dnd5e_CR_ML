@@ -1,6 +1,8 @@
 import json
 import glob
 
+import pandas as pd
+
 list_of_bestiaries = glob.glob("data/bestiary/*.json")
 
 monsters = []
@@ -21,34 +23,69 @@ for bestiary in list_of_bestiaries:
 
 print("I have read %d stat blocks of monsters!" % (len(monsters)) )
 
+
+class CleanMonsterData:
+    data = {}
+    def __init__(self, monster):
+        self.data = monster.copy()
+
+    def drop_insignificant_keys(self):
+        for key in ["isNpc", "source", "page", "passive", "languages", "hasToken", "languageTags", "miscTags", "senses", "_isCopy", "familiar"]:
+            self.data.pop(key, None)
+
+    def reduce_attributes(self):
+        sum_of_attributes = 0
+        for attribute in ["str", "dex", "con", "wis", "int", "cha"]:
+            if attribute in self.data:
+                sum_of_attributes += self.data[attribute]
+                self.data.pop(attribute)
+            else:
+                print("Missing attribute %s!" % attribute)
+        self.data["attribute_sum"] = sum
+
+    def reduce_skill(self):
+        if "skill" in self.data:
+            skill_proficiencies = len(self.data["skill"])
+            self.data.pop("skill")
+            self.data["skill_proficiencies"] = skill_proficiencies
+        else:
+            self.data["save_proficiencies"] = 0
+
+    def reduce_save(self):
+        if "save" in self.data:
+            save_proficiencies = len(self.data["save"])
+            self.data.pop("save")
+            self.data["save_proficiencies"] = save_proficiencies
+        else:
+            self.data["save_proficiencies"] = 0
+
+    def reduce_senseTags(self):
+        if not "senseTags" in self.data:
+            self.data["senseTags"] = []
+
+
+def getUniqueEntries(list, string):
+    used = []
+    for element in list:
+        if string in element:
+            for sub_element in element[string]:
+                if not sub_element in used:
+                    used.append(sub_element)
+    return used
+
+# used = []
 # for mon in monsters:
-#     if "_isCopy" in mon:
-#         for x,y in mon.items():
-#             print(x,y)
-#         print("\n")
+#     if "actionTags" in mon:
+#         for x in mon["actionTags"]:
+#             if not x in used:
+#                 used.append(x)
 
-# class KeyInventory:
-#     def __init__(self, list_of_dictionaries):
-#         self.known = dict()
-#         self.get_inventory(list_of_dictionaries)
-#
-#     def get_inventory(self, list_of_dictionaries):
-#         for item in list_of_dictionaries:
-#             for key, value in item.items():
-#                 if type(value) == dict:
-#                     for nested_key, nested_value in value.items():
-#                         unique_key = "%s_%s" % (key, nested_key)
-#                         self.add_unknown(unique_key, nested_value)
-#                 else:
-#                     self.add_unknown(key, value)
-#
-#     def add_unknown(self, key, value):
-#         if not key in self.known:
-#             self.known[str(key)] = str(value)
-#
-# inventory = KeyInventory(monsters)
-# f = open("data/key_inventory.txt", "w")
-# for x,y in inventory.known.items():
-#     f.write("%s \t\t\t %s\n" % (x,y))
-# f.close()
+print( getUniqueEntries(monsters, "senseTags") )
 
+# data = CleanMonsterData(monsters[0])
+# data.reduce_senses()
+# print(data.data["senseTag1"])
+
+# for i in monsters:
+#     if not "senseTags" in i:
+#         print(i["name"])

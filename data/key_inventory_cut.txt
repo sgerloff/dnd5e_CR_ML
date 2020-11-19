@@ -55,4 +55,3 @@ speed_swim 			 60
 speed_canHover 			 True
 vulnerable 			 ['radiant']
 speed_burrow 			 40
-type_swarmSize 			 T
