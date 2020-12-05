@@ -11,8 +11,8 @@ The data from https://5e.tools/ contains 1365 monsters, with known CR, not legen
 
 The challenge rating takes values from 0 to 23 and for small values even includes fractions (1/8, 1/4, 1/2). Since we have a classification task, this does not matter too much.
 
-## Logistic regression for 3 features (Sanity Check)
-To get going, lets see if this task can be trivially solved by feeding three key numeric features: The sum of attributes, the number of skill proficiencies and the number of save proficiencies. Note: This should fail and give high bias, as even experienced humans should not be able to give the right call with this information.
+## Logistic regression for 4 features (Sanity Check)
+To get going, lets see if this task can be trivially solved by feeding three key numeric features: The average hit points, the sum of attributes, the number of skill proficiencies and the number of save proficiencies. Note: This should fail and give high bias, as even experienced humans should not be able to give the right call with this information.
 The results is summarized in the following learning curve:
 
 ![alt text](https://github.com/sgerloff/dnd5e_CR_ML/blob/master/data/leaning_curve_logistic_regression.png)
@@ -20,4 +20,4 @@ The results is summarized in the following learning curve:
 We clearly see the expected high bias.
 
 ## Next step:
-We have a high bias issue. Therefore we aim to add more features, such as the average hit points, action descriptions and more.
+We have a high bias issue. Therefore we aim to add more features, such as the action descriptions.
