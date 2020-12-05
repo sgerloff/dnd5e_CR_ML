@@ -14,12 +14,15 @@ class MonsterFeatureExtractor:
 
     def reduce_attributes(self):
         sum_of_attributes = 0
+        attribute_list = list()
         for attribute in ["str", "dex", "con", "wis", "int", "cha"]:
             if attribute in self.input_data:
                 sum_of_attributes += self.input_data[attribute]
+                attribute_list.append(self.input_data[attribute])
             else:
                 print("Missing attribute %s!" % attribute)
         self.stats["attribute_sum"] = sum_of_attributes
+        self.stats["attribute_list"] = attribute_list
 
     def reduce_skill(self):
         if "skill" in self.input_data:
@@ -46,7 +49,8 @@ class MonsterFeatureExtractor:
 
     def get_feature_list(self):
         features = list()
-        features.append(self.stats["attribute_sum"])
+        # features.append(self.stats["attribute_sum"])
+        features.extend(self.stats["attribute_list"])
         features.append(self.stats["skill_proficiencies"])
         features.append(self.stats["save_proficiencies"])
         features.append(self.stats["hp"])
