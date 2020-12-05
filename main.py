@@ -47,7 +47,7 @@ def getUniqueEntries(list, string):
 # from utility.plot_monster_cr_histogram import plot_monster_cr_histogram
 # plot_monster_cr_histogram(monsters, "data/cr_histogram.png")
 
-#Extract features and write into X,y
+# Extract features and write into X,y
 from utility.MonsterFeatureExtrator import MonsterFeatureExtractor
 import numpy as np
 
@@ -63,5 +63,5 @@ y = input_target
 
 from models.logistic_regression import logistic_regression_model
 model = logistic_regression_model(X,y)
-model.plot_learning_curve( 'data/leaning_curve_logistic_regression.png' )
+model.plot_learning_curve( 'data/leaning_curve_logistic_regression_three_features.png' )
 

@@ -10,6 +10,7 @@ class MonsterFeatureExtractor:
         self.reduce_attributes()
         self.reduce_skill()
         self.reduce_save()
+        self.reduce_hp()
 
     def reduce_attributes(self):
         sum_of_attributes = 0
@@ -36,11 +37,19 @@ class MonsterFeatureExtractor:
         else:
             self.stats["save_proficiencies"] = 0
 
+    def reduce_hp(self):
+        if "hp" in self.input_data:
+            if "average" in self.input_data["hp"]:
+                self.stats["hp"] = self.input_data["hp"]["average"]
+        else:
+            print("no Hp", self.input_data["name"])
+
     def get_feature_list(self):
         features = list()
         features.append(self.stats["attribute_sum"])
         features.append(self.stats["skill_proficiencies"])
         features.append(self.stats["save_proficiencies"])
+        features.append(self.stats["hp"])
         return features
 
     def reduce_attacks(self):

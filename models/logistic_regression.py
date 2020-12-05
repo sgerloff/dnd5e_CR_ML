@@ -46,7 +46,7 @@ class logistic_regression_model:
             if index % 10 == 0:
                 X_tmp = self.X_train[:index]
                 y_tmp = self.y_train[:index]
-                clf = LogisticRegression(random_state=0).fit(X_tmp, y_tmp)
+                clf = LogisticRegression(random_state=0, max_iter=1000).fit(X_tmp, y_tmp)
                 self.number_of_samples.append(index)
                 self.train_scores.append(clf.score(X_tmp, y_tmp))
                 self.test_scores.append(clf.score(self.X_test, self.y_test))
