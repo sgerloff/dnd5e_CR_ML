@@ -63,5 +63,5 @@ y = input_target
 
 from models.logistic_regression import logistic_regression_model
 model = logistic_regression_model(X,y)
-model.plot_learning_curve( 'data/leaning_curve_logistic_regression_three_features.png' )
+model.plot_learning_curve( 'data/leaning_curve_logistic_regression.png' )
 
