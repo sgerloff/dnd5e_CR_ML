@@ -7,7 +7,7 @@ This project serves as a testing bed to familiarize myself with some machine lea
 ## Data Inventory
 The data from https://5e.tools/ contains 1365 monsters, with known CR, not legendary, not mythic and not copies of other monsters. The distribution of monsters per challenge rating is shown in the histogram:
 
-![alt text](https://github.com/sgerloff/dnd5e_CR_ML/blob/master/data/cr_histogram.png)
+![alt text](/data/cr_histogram.png)
 
 The challenge rating takes values from 0 to 23 and for small values even includes fractions (1/8, 1/4, 1/2). Since we have a classification task, this does not matter too much.
 
@@ -15,9 +15,12 @@ The challenge rating takes values from 0 to 23 and for small values even include
 To get going, lets see if this task can be trivially solved by feeding three key numeric features: The average hit points, the sum of attributes, the number of skill proficiencies and the number of save proficiencies. Note: This should fail and give high bias, as even experienced humans should not be able to give the right call with this information.
 The results are summarized in the following learning curve:
 
-![alt text](https://github.com/sgerloff/dnd5e_CR_ML/blob/master/data/leaning_curve_logistic_regression.png)
+![alt text](/data/leaning_curve_logistic_regression.png)
 
 We clearly see the expected high bias.
 
+## Switch to pandas DataFrame
+To include more features, I have made the switch to pandas DataFrames(), which allows to extract features more easily. In particular, we can easily include all the "Tags" of the original data as one-hot vectors.
+
 ## Next step:
-We have a high bias issue. Therefore we aim to add more features, such as the action descriptions.
+The next important step is to use pandas to extract proper numerical features from important entries.
