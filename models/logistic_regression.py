@@ -21,7 +21,7 @@ class logistic_regression_model:
         scaler = preprocessing.StandardScaler().fit(X)
         X_scale = scaler.transform(X)
         #Split data set:
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_scale, y, test_size=0.33, random_state=0)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_scale, y, test_size=0.33)
 
     def plot_learning_curve(self, output_str):
         self.train_learning_curve()
@@ -46,7 +46,7 @@ class logistic_regression_model:
             if index % 10 == 0:
                 X_tmp = self.X_train[:index]
                 y_tmp = self.y_train[:index]
-                clf = LogisticRegression(random_state=0, max_iter=1000).fit(X_tmp, y_tmp)
+                clf = LogisticRegression(max_iter=1000).fit(X_tmp, y_tmp)
                 self.number_of_samples.append(index)
                 self.train_scores.append(clf.score(X_tmp, y_tmp))
                 self.test_scores.append(clf.score(self.X_test, self.y_test))
