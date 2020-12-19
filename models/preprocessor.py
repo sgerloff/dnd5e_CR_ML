@@ -3,7 +3,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 
-from sklearn.compose import ColumnTransformer
 
 class Preprocessor:
     def __init__(self):
