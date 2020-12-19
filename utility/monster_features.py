@@ -14,7 +14,8 @@ class MonsterFeatures:
                            "legendaryGroup.source", "legendaryGroup.name", "hasToken", "languages", "alignment", "type",
                            "page", "source"]  # Keep Name just for Debugging
         self.tag_keys = ["size", "conditionImmune", "conditionInflictSpell", "spellcastingTags", "conditionInflict",
-                         "miscTags", "damageTags", "actionTags", "senseTags", "traitTags", "senses"]
+                         "miscTags", "damageTags", "actionTags", "senseTags", "traitTags", "senses", "vulnerable",
+                         "immune", "resist"]
 
         # speed, type
         # vulnerable, reaction, action, immune, spellcasting, trait, resist
@@ -51,10 +52,6 @@ class MonsterFeatures:
         self.__extract_number_of_proficiencies("save")
         # Clean up hp.average
         self.__clean_hp()
-        # Unwrap category lists:
-        self.df = self.unwrap_category_lists("vulnerable")
-        self.df = self.unwrap_category_lists("immune")
-        self.df = self.unwrap_category_lists("resist")
         # Join text data
         self.__clean_text_data("trait")
         self.__clean_text_data("action")
@@ -93,7 +90,7 @@ class MonsterFeatures:
 
     def __convert_tag_keys(self):
         for key in self.tag_keys:
-            self.df = self.replace_column_with_one_hot(key)
+            self.df[key] = self.unwrap_category_lists(key)
 
     def __extract_number_of_skill_proficiencies(self):
         skill_keys = self.get_keys_starting_with("skill")
@@ -105,33 +102,26 @@ class MonsterFeatures:
         self.df[string + ".proficiencies"] = self.df[keys].notnull().astype("int").sum(axis=1)
         self.df.drop(keys, axis=1, inplace=True)
 
-    def replace_column_with_one_hot(self, key):
-        try:
-            return self.df.drop(key, axis=1).join(self.get_one_hot_columns(self.df[key]))
-        except TypeError:
-            print("TypeError: Could not convert column '{}' to one-hot columns.".format(key))
-
-    @staticmethod
-    def get_one_hot_columns(series):
-        stacked_series = series.apply(pd.Series).stack(dropna=False).reset_index(1, drop=True)
-        return pd.get_dummies(stacked_series, prefix=series.name, sparse=True).groupby(level=0).sum()
-
     def __clean_hp(self):
         # Fill missing HP values with first number in hp.special:
         self.df["hp.average"].fillna(self.df["hp.special"].str.extract(r'(^\d*)').squeeze(), inplace=True)
 
-    def convert_string_entries(self, key):
-        return self.df[key].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-
     def unwrap_category_lists(self, key):
-        tmp = self.df[key].apply(pd.Series).stack(dropna=False).reset_index(1, drop=True)
-        # Catch entries containing dicts (stating conditions and notes that we will drop)
-        is_dict = tmp.apply(lambda x: isinstance(x, dict))
-        tmp[is_dict] = tmp[is_dict].apply(lambda x: x[key] if key in x else pd.NA)
-        # Unwrap lists extracted from dicts:
-        tmp = tmp.apply(pd.Series).stack(dropna=False).reset_index(1, drop=True)
-        # Assign final one-hot columns
-        return self.df.drop(key, axis=1).join(self.get_one_hot_columns(tmp.rename(key)))
+        return self.df[key].apply(lambda x: self.__extend_dicts(x, key))
+
+    def __extend_dicts(self, value, key):
+        tmp = []
+        if isinstance(value,list):
+            for e in value:
+                if isinstance(e, dict):
+                    if key in e:
+                        tmp.extend(e[key])
+                else:
+                    tmp.append(e)
+        if isinstance(value, str):
+            return value
+        else:
+            return tmp
 
     def __clean_text_data(self, key):
         # Save number of different traits:
@@ -148,9 +138,9 @@ class MonsterFeatures:
     def __clean_spellcasting(self):
         # To begin with just track "innate" and normal spellcasting
         self.df["spellcasting"] = self.df["spellcasting"].apply(
-            lambda x: self.extract_name(x) if isinstance(x, list) else pd.NA)
-        # Create one-hot columns:
-        self.df = self.replace_column_with_one_hot("spellcasting")
+            lambda x: self.extract_name(x) if isinstance(x, list) else "")
+        # # Create one-hot columns:
+        # self.df = self.replace_column_with_one_hot("spellcasting")
 
     @staticmethod
     def extract_name(value):
@@ -158,7 +148,7 @@ class MonsterFeatures:
         output = []
         for n in names:
             if n.startswith("Innate Spellcasting"):
-                output.append("Innate Spellcasting")
+                output.append("Innate-Spellcasting")
             elif n.startswith("Spellcasting"):
                 output.append("Spellcasting")
         return output
@@ -184,32 +174,39 @@ class MonsterFeatures:
         self.df["speed.canHover"] = self.df["speed.canHover"].fillna(False).apply(int)
 
     def get_clean_features(self):
-        clean_feature_df = {}
-        #Numeric Features:
-        numeric_keys = ["hp.average", "str", "dex", "con", "int", "wis", "cha"]
-        numeric_keys.extend(self.get_keys_starting_with("speed."))
-        numeric_keys.extend( ["skill.proficiencies", "save.proficiencies"])
-        numeric_keys.extend(self.get_keys_starting_with("number_of_"))
-        clean_feature_df["numeric"] = self.df[numeric_keys]
-
-        #one-hot features
-        one_hot_keys = []
-        for key in self.tag_keys:
-            one_hot_keys.extend(self.get_keys_starting_with(key + "_"))
-
-        category_keys = ["vulnerable", "resist", "immune"]
-        for key in category_keys:
-            one_hot_keys.extend(self.get_keys_starting_with(key + "_"))
-
-        one_hot_keys.extend(self.get_keys_starting_with("spellcasting_"))
-        clean_feature_df["one_hot"] = self.df[one_hot_keys]
-
-        #unvectorized string features
-        string_features = ["action", "reaction", "trait"]
-        clean_feature_df["string"] = self.df[string_features].fillna("")
-
-        return pd.concat(clean_feature_df, axis=1)
-
+        clean_features = ["hp.average", "str", "dex", "con", "int", "wis", "cha"]
+        clean_features.extend(self.get_keys_starting_with("speed."))
+        clean_features.extend(["skill.proficiencies", "save.proficiencies"])
+        clean_features.extend(self.get_keys_starting_with("number_of_"))
+        clean_features.extend(self.tag_keys)
+        clean_features.extend(["action","reaction","trait"])
+        clean_features.extend(["spellcasting"])
+        # clean_feature_df = {}
+        # #Numeric Features:
+        # numeric_keys = ["hp.average", "str", "dex", "con", "int", "wis", "cha"]
+        # numeric_keys.extend(self.get_keys_starting_with("speed."))
+        # numeric_keys.extend( ["skill.proficiencies", "save.proficiencies"])
+        # numeric_keys.extend(self.get_keys_starting_with("number_of_"))
+        # clean_feature_df["numeric"] = self.df[numeric_keys]
+        #
+        # #one-hot features
+        # one_hot_keys = []
+        # for key in self.tag_keys:
+        #     one_hot_keys.extend(self.get_keys_starting_with(key + "_"))
+        #
+        # category_keys = ["vulnerable", "resist", "immune"]
+        # for key in category_keys:
+        #     one_hot_keys.extend(self.get_keys_starting_with(key + "_"))
+        #
+        # one_hot_keys.extend(self.get_keys_starting_with("spellcasting_"))
+        # clean_feature_df["one_hot"] = self.df[one_hot_keys]
+        #
+        # #unvectorized string features
+        # string_features = ["action", "reaction", "trait"]
+        # clean_feature_df["string"] = self.df[string_features].fillna("")
+        #
+        # return pd.concat(clean_feature_df, axis=1)
+        return self.df[clean_features]
 
     def get_target(self):
         return self.df["cr"]
