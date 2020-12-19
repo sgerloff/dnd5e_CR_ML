@@ -1,8 +1,11 @@
 import glob
 from utility.monster_features import MonsterFeatures
-from models.logistic_regression import logistic_regression_model
-import numpy as np
-import pandas as pd
+from utility.plot_learning_curve import plot_learning_curve
+import matplotlib.pyplot as plt
+from models.preprocessor import Preprocessor
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import ShuffleSplit
 
 # Preprocessing of JSON Files
 list_of_bestiaries = glob.glob("data/bestiary/*.json")
@@ -18,20 +21,13 @@ mf.load("data/monster_features")
 features = mf.get_clean_features()
 target = mf.get_target()
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.33)
-
-
-from models.preprocessor import Preprocessor
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
-
 pipe = Pipeline([
     ("pre", Preprocessor()),
-    ("clf", LogisticRegression(max_iter=1000))
+    ("clf", LogisticRegression(C=0.1,max_iter=1000))
 ])
-pipe.fit(X_train, y_train)
-print(pipe.score(X_train, y_train))
-print(pipe.score(X_test,y_test))
 
-
+#Generate Summary
+cv = ShuffleSplit(n_splits=3, test_size=0.2, random_state=0)
+title="Logisticregression Brute Force"
+plot_learning_curve(pipe, title,features,target, axes=None, ylim=(0.0, 1.01),train_sizes=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8, 0.9, 1.],cv=cv,n_jobs=-1)
+plt.show()
