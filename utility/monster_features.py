@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
-import json, ast
+import json
+import re
+import spacy
+import string
 
 
 class MonsterFeatures:
@@ -17,6 +20,7 @@ class MonsterFeatures:
                          "miscTags", "damageTags", "actionTags", "senseTags", "traitTags", "senses", "vulnerable",
                          "immune", "resist"]
 
+        self.nlp = spacy.load("en_core_web_sm")
         # speed, type
         # vulnerable, reaction, action, immune, spellcasting, trait, resist
 
@@ -124,16 +128,53 @@ class MonsterFeatures:
             return tmp
 
     def __clean_text_data(self, key):
-        # Save number of different traits:
-        self.df["number_of_" + key + "s"] = self.df[key].apply(
-            lambda x: len(x) if isinstance(x, list) else 0)
-        self.df[key] = self.df[key].apply(lambda x: self.join_entries(x) if isinstance(x, list) else pd.NA)
+        # Save number of different entries:
+        self.df["number_of_" + key + "s"] = self.df[key].apply(lambda x: len(x) if isinstance(x, list) else 0)
+        #Join all entries into one body of text
+        # self.df = self.df.apply(lambda row: self.preprocess_text(row, key) if isinstance(row[key], list) else "", axis=1)
+        self.df["processed_"+key] = self.df.apply(
+            lambda x: self.preprocess_text(x[key], x["name"]) if isinstance(x[key], list) else "",
+            axis=1)
+        self.df[key] = self.df["processed_"+key]
+        self.df.drop("processed_"+key, axis=1)
+        # #Extract and substitute dnd5e-tk specific commands:
+        # dnd5e_tk_commands = re.compile(r"{@([^}\s]*)\s*([^}]*)}?")
+        # self.df[key] = self.df[key].apply(lambda x: dnd5e_tk_commands.sub(r"dndtk_\1", x))
+        # for index, row in self.df.iterrows():
+        #     action = row[key]
+        #     names = row["name"].split(" ")
+        #     for name in names:
+        #         print(name)
+        #         print(action)
+        #         reg = re.compile(r"{}".format(name),re.IGNORECASE)
+        #         action = reg.sub("name_string", action)
+        #     row[key] = action
 
-    @staticmethod
-    def join_entries(value):
-        entries = [e if "entries" in d else '' for d in value for e in d["entries"]]
+    def preprocess_text(self, input, name):
+        #Join entries to single block of text:
+        entries = [e if "entries" in d else '' for d in input for e in d["entries"]]
         entry_string = [i if isinstance(i, str) else '' for i in entries]
-        return "\n".join(entry_string)
+        text = "\n".join(entry_string)
+        #Substitute dnd5e toolkit specific commands:
+        dnd5e_tk_commands = re.compile(r"{@([^}\s]*)\s*([^}]*)}?")
+        text = dnd5e_tk_commands.sub(r"dndtk_\1", text)
+        #Substitute creatures names:
+        remove_brackets = re.compile(r"\(.*\)")
+        name_str = remove_brackets.sub("",name)
+        name_words = name_str.split(" ")
+        for n in name_words:
+            if n.lower() not in ["of", "the"] and len(n) > 1:
+                name_regex = re.compile(r"{}".format(n),re.IGNORECASE)
+                text = name_regex.sub("name_string", text)
+        #Create tokens from lmma with stop words
+        doc = self.nlp(text)
+        tokens = [ token.lemma_ for token in doc if token.is_stop is False and token.text not in string.punctuation]
+        return " ".join(tokens)
+
+
+        # entries = [e if "entries" in d else '' for d in value for e in d["entries"]]
+        # entry_string = [i if isinstance(i, str) else '' for i in entries]
+        # return "\n".join(entry_string)
 
     def __clean_spellcasting(self):
         # To begin with just track "innate" and normal spellcasting
@@ -181,31 +222,6 @@ class MonsterFeatures:
         clean_features.extend(self.tag_keys)
         clean_features.extend(["action","reaction","trait"])
         clean_features.extend(["spellcasting"])
-        # clean_feature_df = {}
-        # #Numeric Features:
-        # numeric_keys = ["hp.average", "str", "dex", "con", "int", "wis", "cha"]
-        # numeric_keys.extend(self.get_keys_starting_with("speed."))
-        # numeric_keys.extend( ["skill.proficiencies", "save.proficiencies"])
-        # numeric_keys.extend(self.get_keys_starting_with("number_of_"))
-        # clean_feature_df["numeric"] = self.df[numeric_keys]
-        #
-        # #one-hot features
-        # one_hot_keys = []
-        # for key in self.tag_keys:
-        #     one_hot_keys.extend(self.get_keys_starting_with(key + "_"))
-        #
-        # category_keys = ["vulnerable", "resist", "immune"]
-        # for key in category_keys:
-        #     one_hot_keys.extend(self.get_keys_starting_with(key + "_"))
-        #
-        # one_hot_keys.extend(self.get_keys_starting_with("spellcasting_"))
-        # clean_feature_df["one_hot"] = self.df[one_hot_keys]
-        #
-        # #unvectorized string features
-        # string_features = ["action", "reaction", "trait"]
-        # clean_feature_df["string"] = self.df[string_features].fillna("")
-        #
-        # return pd.concat(clean_feature_df, axis=1)
         return self.df[clean_features]
 
     def get_target(self):

@@ -27,7 +27,7 @@ class Preprocessor:
         #Build vectorizer Database:
         self.vectorizers = {}
         for key in self.to_vectorize:
-            self.vectorizers[key] = TfidfVectorizer(stop_words="english").fit(X[key].fillna(""))
+            self.vectorizers[key] = TfidfVectorizer().fit(X[key].fillna(""))
 
     def transform(self, X, y=0):
         features = X.copy()

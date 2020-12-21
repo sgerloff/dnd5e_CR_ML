@@ -12,6 +12,9 @@ class GradientBoostingModel(LogisticRegressionModel):
         self.X_test = pd.DataFrame()
         self.y_test = pd.DataFrame()
 
+        self.original_features = pd.DataFrame()
+        self.original_targets = pd.DataFrame()
+
         self.pipe = Pipeline([
             ("pre", Preprocessor()),
             ("clf", GradientBoostingClassifier())
