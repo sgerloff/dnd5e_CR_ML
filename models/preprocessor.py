@@ -7,10 +7,11 @@ import pandas as pd
 class Preprocessor:
     def __init__(self):
         self.to_scale = ["hp.average", "str", "dex", "con", "int", "wis", "cha", "speed.walk", "speed.fly",
-                         "speed.burrow", "speed.swim", "speed.climb"]
+                         "speed.burrow", "speed.swim", "speed.climb", 'magic_spellcaster_level', 'magic_spell_max_dc', 'magic_spell_max_hit', 'magic_0_spells', 'magic_0_slots', 'magic_at_will_0_spells', 'magic_1_spells', 'magic_1_slots', 'magic_at_will_1_spells', 'magic_2_spells', 'magic_2_slots', 'magic_at_will_2_spells', 'magic_3_spells', 'magic_3_slots', 'magic_at_will_3_spells', 'magic_4_spells', 'magic_4_slots', 'magic_at_will_4_spells', 'magic_5_spells', 'magic_5_slots', 'magic_at_will_5_spells', 'magic_6_spells', 'magic_6_slots', 'magic_at_will_6_spells', 'magic_7_spells', 'magic_7_slots', 'magic_at_will_7_spells', 'magic_8_spells', 'magic_8_slots', 'magic_at_will_8_spells', 'magic_9_spells', 'magic_9_slots', 'magic_at_will_9_spells']
+
         self.to_binarize = ["size", "conditionImmune", "conditionInflictSpell", "spellcastingTags", "conditionInflict",
                             "miscTags", "damageTags", "actionTags", "senseTags", "traitTags", "senses", "vulnerable",
-                            "immune", "resist", "spellcasting"]
+                            "immune", "resist"]
         self.to_vectorize = ["action", "reaction", "trait"]
 
         self.scaler = preprocessing.StandardScaler()
@@ -23,7 +24,7 @@ class Preprocessor:
         #Build binarizer Database:
         self.binarizers = {}
         for key in self.to_binarize:
-            print("Binarize: "+ key)
+            # print("Binarize: "+ key)
             self.binarizers[key] = CountVectorizer(analyzer=set).fit(X[key])
         #Build vectorizer Database:
         self.vectorizers = {}

@@ -69,9 +69,9 @@ class MonsterFeatures:
         # Clean up hp.average
         self.__clean_hp()
         # Join text data
-        # self.__clean_text_data("trait")
-        # self.__clean_text_data("action")
-        # self.__clean_text_data("reaction")
+        self.__clean_text_data("trait")
+        self.__clean_text_data("action")
+        self.__clean_text_data("reaction")
         # Clean spellcasting:
         self.__clean_spellcasting()
         # Clean Speeds
@@ -178,13 +178,13 @@ class MonsterFeatures:
         self.df.drop("spellcasting", axis=1, inplace=True)
 
     def extract_spell_information(self, value):
-        self.spell_book["spellcaster_level"] = 0
-        self.spell_book["spell_max_dc"] = 0
-        self.spell_book["spell_max_hit"] = 0
+        self.spell_book["magic_spellcaster_level"] = 0
+        self.spell_book["magic_spell_max_dc"] = 0
+        self.spell_book["magic_spell_max_hit"] = 0
         for i in range(10):
-            self.spell_book[str(i)+"_spells"] = 0
-            self.spell_book[str(i)+"_slots"] = 0
-            self.spell_book["at_will_" + str(i)+"_spells"] = 0
+            self.spell_book["magic_" + str(i)+"_spells"] = 0
+            self.spell_book["magic_" + str(i)+"_slots"] = 0
+            self.spell_book["magic_at_will_" + str(i)+"_spells"] = 0
         if isinstance(value, list):
             levels = [0]
             dcs = [0]
@@ -203,7 +203,7 @@ class MonsterFeatures:
                 if "will" in entry:
                     tmp = self.parse_spell_levels(entry["will"])
                     for spell in tmp:
-                        self.spell_book["at_will_" + str(spell)+"_spells"] += 1
+                        self.spell_book["magic_at_will_" + str(spell)+"_spells"] += 1
                 if "daily" in entry:
                     self.parse_daily(entry["daily"])
                 if "spells" in entry:
@@ -211,9 +211,9 @@ class MonsterFeatures:
             levels = [ int(level) for level in levels ]
             dcs = [ int(dc) for dc in dcs]
             hits = [ int(hit) for hit in hits]
-            self.spell_book["spellcaster_level"] = max(levels)
-            self.spell_book["spell_max_dc"] = max(dcs)
-            self.spell_book["spell_max_hit"] = max(hits)
+            self.spell_book["magic_spellcaster_level"] = max(levels)
+            self.spell_book["magic_spell_max_dc"] = max(dcs)
+            self.spell_book["magic_spell_max_hit"] = max(hits)
         return self.spell_book
 
 
@@ -261,18 +261,18 @@ class MonsterFeatures:
         for n in range(number):
             random_spells.append( random.choice(spell_list) )
         for spell in random_spells:
-            self.spell_book[str(spell)+"_slots"] += 1
-            self.spell_book[str(spell)+"_spells"] += 1
+            self.spell_book["magic_" + str(spell)+"_slots"] += 1
+            self.spell_book["magic_" + str(spell)+"_spells"] += 1
 
     def parse_spellbook(self, value):
         if "0" in value:
-            self.spell_book["at_will_0_spells"] += len(value["0"]["spells"])
+            self.spell_book["magic_at_will_0_spells"] += len(value["0"]["spells"])
         for i in range(9):
             if str(i+1) in value:
                 if "slots" in value[str(i+1)]:
-                    self.spell_book[str(i+1)+"_slots"] += value[str(i+1)]["slots"]
+                    self.spell_book["magic_" + str(i+1)+"_slots"] += value[str(i+1)]["slots"]
                 if "spells" in value[str(i+1)]:
-                    self.spell_book[str(i+1)+"_spells"] += len(value[str(i+1)]["spells"])
+                    self.spell_book["magic_" + str(i+1)+"_spells"] += len(value[str(i+1)]["spells"])
 
     @staticmethod
     def extract_name(value):
@@ -312,7 +312,7 @@ class MonsterFeatures:
         clean_features.extend(self.get_keys_starting_with("number_of_"))
         clean_features.extend(self.tag_keys)
         clean_features.extend(["action", "reaction", "trait"])
-        clean_features.extend(["spellcasting"])
+        clean_features.extend(self.get_keys_starting_with("magic_"))
         return self.df[clean_features]
 
     def get_target(self):
