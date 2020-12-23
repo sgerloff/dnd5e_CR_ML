@@ -23,6 +23,7 @@ class Preprocessor:
         #Build binarizer Database:
         self.binarizers = {}
         for key in self.to_binarize:
+            print("Binarize: "+ key)
             self.binarizers[key] = CountVectorizer(analyzer=set).fit(X[key])
         #Build vectorizer Database:
         self.vectorizers = {}

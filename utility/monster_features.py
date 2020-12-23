@@ -4,6 +4,8 @@ import json
 import re
 import spacy
 import string
+import pickle
+import random
 
 
 class MonsterFeatures:
@@ -21,6 +23,16 @@ class MonsterFeatures:
                          "immune", "resist"]
 
         self.nlp = spacy.load("en_core_web_sm")
+
+        self.spellcaster_level = re.compile(r"([0-9]{1,2})[a-z]{1,2}[\s-]level")
+        self.spell_dc = re.compile(r"\{\@dc\s([0-9]*)\}")
+        self.spell_hit = re.compile(r"\{@hit}\s([0-9]*)\}")
+
+        with open("data/spell_dict.pkl", "rb") as handle:
+            self.spell_dict = pickle.load(handle)
+
+        self.spell_book = dict()
+        self.spell_regex = re.compile(r"\{\@spell\s(.*?)\}")
         # speed, type
         # vulnerable, reaction, action, immune, spellcasting, trait, resist
 
@@ -57,9 +69,9 @@ class MonsterFeatures:
         # Clean up hp.average
         self.__clean_hp()
         # Join text data
-        self.__clean_text_data("trait")
-        self.__clean_text_data("action")
-        self.__clean_text_data("reaction")
+        # self.__clean_text_data("trait")
+        # self.__clean_text_data("action")
+        # self.__clean_text_data("reaction")
         # Clean spellcasting:
         self.__clean_spellcasting()
         # Clean Speeds
@@ -115,7 +127,7 @@ class MonsterFeatures:
 
     def __extend_dicts(self, value, key):
         tmp = []
-        if isinstance(value,list):
+        if isinstance(value, list):
             for e in value:
                 if isinstance(e, dict):
                     if key in e:
@@ -130,58 +142,137 @@ class MonsterFeatures:
     def __clean_text_data(self, key):
         # Save number of different entries:
         self.df["number_of_" + key + "s"] = self.df[key].apply(lambda x: len(x) if isinstance(x, list) else 0)
-        #Join all entries into one body of text
+        # Join all entries into one body of text
         # self.df = self.df.apply(lambda row: self.preprocess_text(row, key) if isinstance(row[key], list) else "", axis=1)
-        self.df["processed_"+key] = self.df.apply(
+        self.df["processed_" + key] = self.df.apply(
             lambda x: self.preprocess_text(x[key], x["name"]) if isinstance(x[key], list) else "",
             axis=1)
-        self.df[key] = self.df["processed_"+key]
-        self.df.drop("processed_"+key, axis=1)
-        # #Extract and substitute dnd5e-tk specific commands:
-        # dnd5e_tk_commands = re.compile(r"{@([^}\s]*)\s*([^}]*)}?")
-        # self.df[key] = self.df[key].apply(lambda x: dnd5e_tk_commands.sub(r"dndtk_\1", x))
-        # for index, row in self.df.iterrows():
-        #     action = row[key]
-        #     names = row["name"].split(" ")
-        #     for name in names:
-        #         print(name)
-        #         print(action)
-        #         reg = re.compile(r"{}".format(name),re.IGNORECASE)
-        #         action = reg.sub("name_string", action)
-        #     row[key] = action
+        self.df[key] = self.df["processed_" + key]
+        self.df.drop("processed_" + key, axis=1)
 
     def preprocess_text(self, input, name):
-        #Join entries to single block of text:
+        # Join entries to single block of text:
         entries = [e if "entries" in d else '' for d in input for e in d["entries"]]
         entry_string = [i if isinstance(i, str) else '' for i in entries]
         text = "\n".join(entry_string)
-        #Substitute dnd5e toolkit specific commands:
+        # Substitute dnd5e toolkit specific commands:
         dnd5e_tk_commands = re.compile(r"{@([^}\s]*)\s*([^}]*)}?")
         text = dnd5e_tk_commands.sub(r"dndtk_\1", text)
-        #Substitute creatures names:
+        # Substitute creatures names:
         remove_brackets = re.compile(r"\(.*\)")
-        name_str = remove_brackets.sub("",name)
+        name_str = remove_brackets.sub("", name)
         name_words = name_str.split(" ")
         for n in name_words:
             if n.lower() not in ["of", "the"] and len(n) > 1:
-                name_regex = re.compile(r"{}".format(n),re.IGNORECASE)
+                name_regex = re.compile(r"{}".format(n), re.IGNORECASE)
                 text = name_regex.sub("name_string", text)
-        #Create tokens from lmma with stop words
+        # Create tokens from lmma with stop words
         doc = self.nlp(text)
-        tokens = [ token.lemma_ for token in doc if token.is_stop is False and token.text not in string.punctuation]
+        tokens = [token.lemma_ for token in doc if token.is_stop is False and token.text not in string.punctuation]
         return " ".join(tokens)
 
 
-        # entries = [e if "entries" in d else '' for d in value for e in d["entries"]]
-        # entry_string = [i if isinstance(i, str) else '' for i in entries]
-        # return "\n".join(entry_string)
-
     def __clean_spellcasting(self):
-        # To begin with just track "innate" and normal spellcasting
-        self.df["spellcasting"] = self.df["spellcasting"].apply(
-            lambda x: self.extract_name(x) if isinstance(x, list) else "")
-        # # Create one-hot columns:
-        # self.df = self.replace_column_with_one_hot("spellcasting")
+        tmp = self.df["spellcasting"].apply( lambda x: pd.Series(self.extract_spell_information(x)) )
+        self.df = self.df.merge(tmp, left_index=True, right_index=True)
+        self.df.drop("spellcasting", axis=1, inplace=True)
+
+    def extract_spell_information(self, value):
+        self.spell_book["spellcaster_level"] = 0
+        self.spell_book["spell_max_dc"] = 0
+        self.spell_book["spell_max_hit"] = 0
+        for i in range(10):
+            self.spell_book[str(i)+"_spells"] = 0
+            self.spell_book[str(i)+"_slots"] = 0
+            self.spell_book["at_will_" + str(i)+"_spells"] = 0
+        if isinstance(value, list):
+            levels = [0]
+            dcs = [0]
+            hits = [0]
+            for entry in value:
+                if "headerEntries" in entry:
+                    tmp_levels, tmp_dcs, tmp_hits = self.parse_headerEntries(entry["headerEntries"])
+                    levels.extend(tmp_levels)
+                    dcs.extend(tmp_dcs)
+                    hits.extend(tmp_hits)
+                if "footerEntries" in entry:
+                    tmp_levels, tmp_dcs, tmp_hits = self.parse_headerEntries(entry["footerEntries"])
+                    levels.extend(tmp_levels)
+                    dcs.extend(tmp_dcs)
+                    hits.extend(tmp_hits)
+                if "will" in entry:
+                    tmp = self.parse_spell_levels(entry["will"])
+                    for spell in tmp:
+                        self.spell_book["at_will_" + str(spell)+"_spells"] += 1
+                if "daily" in entry:
+                    self.parse_daily(entry["daily"])
+                if "spells" in entry:
+                    self.parse_spellbook(entry["spells"])
+            levels = [ int(level) for level in levels ]
+            dcs = [ int(dc) for dc in dcs]
+            hits = [ int(hit) for hit in hits]
+            self.spell_book["spellcaster_level"] = max(levels)
+            self.spell_book["spell_max_dc"] = max(dcs)
+            self.spell_book["spell_max_hit"] = max(hits)
+        return self.spell_book
+
+
+    def parse_headerEntries(self, value):
+        levels = []
+        dcs = []
+        hits = []
+        for element in value:
+            levels.extend(self.spellcaster_level.findall(element))
+            dcs.extend(self.spell_dc.findall(element))
+            hits.extend(self.spell_hit.findall(element))
+        return levels, dcs, hits
+
+    def parse_spell_levels(self, value):
+        spells = []
+        spell_levels = []
+        for spell in value:
+            spells.extend(self.spell_regex.findall(spell))
+        for spell in spells:
+            spell = str.lower(spell)
+            spell = spell.split("|")[0].strip()
+            if spell in self.spell_dict:
+                spell_levels.append(self.spell_dict[spell])
+            else:
+                print("UNKNOWN SPELL:", spell)
+                print(value)
+        return spell_levels
+
+    def parse_daily(self, value):
+        if "1e" in value:
+            self.add_random_spells(self.parse_spell_levels(value["1e"]), 1)
+        if "1" in value:
+            self.add_random_spells(self.parse_spell_levels(value["1"]), 1)
+        if "2e" in value:
+            self.add_random_spells(self.parse_spell_levels(value["2e"]), 2)
+        if "2" in value:
+            self.add_random_spells(self.parse_spell_levels(value["2"]), 2)
+        if "3e" in value:
+            self.add_random_spells(self.parse_spell_levels(value["3e"]), 3)
+        if "3" in value:
+            self.add_random_spells(self.parse_spell_levels(value["3"]), 3)
+
+    def add_random_spells(self, spell_list, number=1):
+        random_spells = []
+        for n in range(number):
+            random_spells.append( random.choice(spell_list) )
+        for spell in random_spells:
+            self.spell_book[str(spell)+"_slots"] += 1
+            self.spell_book[str(spell)+"_spells"] += 1
+
+    def parse_spellbook(self, value):
+        if "0" in value:
+            self.spell_book["at_will_0_spells"] += len(value["0"]["spells"])
+        for i in range(9):
+            if str(i+1) in value:
+                if "slots" in value[str(i+1)]:
+                    self.spell_book[str(i+1)+"_slots"] += value[str(i+1)]["slots"]
+                if "spells" in value[str(i+1)]:
+                    self.spell_book[str(i+1)+"_spells"] += len(value[str(i+1)]["spells"])
 
     @staticmethod
     def extract_name(value):
@@ -220,7 +311,7 @@ class MonsterFeatures:
         clean_features.extend(["skill.proficiencies", "save.proficiencies"])
         clean_features.extend(self.get_keys_starting_with("number_of_"))
         clean_features.extend(self.tag_keys)
-        clean_features.extend(["action","reaction","trait"])
+        clean_features.extend(["action", "reaction", "trait"])
         clean_features.extend(["spellcasting"])
         return self.df[clean_features]
 
