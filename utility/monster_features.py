@@ -39,7 +39,7 @@ class MonsterFeatures:
     def read_json_files(self, list_of_files):
         list_of_dataframes = []
         for file in list_of_files:
-            with open(file, "r") as f:
+            with open(file, "r", encoding='utf-8') as f:
                 data = json.loads(f.read())
             if "monster" in data:
                 list_of_dataframes.append(pd.json_normalize(data, "monster"))
