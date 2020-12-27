@@ -5,12 +5,12 @@ from utility.monster_features import MonsterFeatures
 list_of_bestiaries = glob.glob("data/bestiary/*.json")
 mf = MonsterFeatures()
 
-mf.read_json_files(list_of_bestiaries)
-mf.clean_data()
-# print(mf.df.info())
-mf.save("data/monster_features")
+# mf.read_json_files(list_of_bestiaries)
+# mf.clean_data()
+# # print(mf.df.info())
+# mf.save("data/monster_features")
 
-# mf.load("data/monster_features")
+mf.load("data/monster_features")
 
 #Generate Summary
 # cv = ShuffleSplit(n_splits=3, test_size=0.2, random_state=0)
@@ -28,12 +28,12 @@ mf.save("data/monster_features")
 # #
 # lr.plot_learning_curve()
 #
-# from models.gradient_boosting import GradientBoostingModel
-# gb = GradientBoostingModel()
-# gb.load_data("data/monster_features")
-# gb.train()
-# print(gb.pipe.score(gb.X_train, gb.y_train))
-# print(gb.pipe.score(gb.X_test, gb.y_test))
-# gb.save("data/gb_model")
+from models.gradient_boosting import GradientBoostingModel
+gb = GradientBoostingModel()
+gb.load_data("data/monster_features")
+gb.train()
+print(gb.pipe.score(gb.X_train, gb.y_train))
+print(gb.pipe.score(gb.X_test, gb.y_test))
+gb.save("data/gb_model")
 #
 # gb.plot_learning_curve()

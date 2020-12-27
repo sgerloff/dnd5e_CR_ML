@@ -17,5 +17,5 @@ class GradientBoostingModel(LogisticRegressionModel):
 
         self.pipe = Pipeline([
             ("pre", Preprocessor()),
-            ("clf", GradientBoostingClassifier())
+            ("clf", GradientBoostingClassifier(learning_rate=0.01, subsample=0.5, n_estimators=1000, verbose=1))
         ])
