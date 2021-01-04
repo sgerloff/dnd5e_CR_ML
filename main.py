@@ -12,6 +12,8 @@ mf = MonsterFeatures()
 
 mf.load("data/monster_features")
 
+
+
 #Generate Summary
 # cv = ShuffleSplit(n_splits=3, test_size=0.2, random_state=0)
 # title="Logisticregression Brute Force"
@@ -28,12 +30,20 @@ mf.load("data/monster_features")
 # #
 # lr.plot_learning_curve()
 #
-from models.gradient_boosting import GradientBoostingModel
-gb = GradientBoostingModel()
-gb.load_data("data/monster_features")
-gb.train()
-print(gb.pipe.score(gb.X_train, gb.y_train))
-print(gb.pipe.score(gb.X_test, gb.y_test))
-gb.save("data/gb_model")
-#
+# from models.gradient_boosting import GradientBoostingModel
+# gb = GradientBoostingModel()
+# gb.load_data("data/monster_features")
+# gb.train()
+# print(gb.pipe.score(gb.X_train, gb.y_train))
+# print(gb.pipe.score(gb.X_test, gb.y_test))
+# gb.save("data/gb_model")
+# #
 # gb.plot_learning_curve()
+
+from models.gradient_boosting_regression import GradientBoostingRegressionModel
+gbr = GradientBoostingRegressionModel()
+gbr.load_data("data/monster_features")
+gbr.train()
+print(gbr.pipe.score(gbr.X_train, gbr.y_train))
+print(gbr.pipe.score(gbr.X_test, gbr.y_test))
+gbr.save("data/gbr_model")
